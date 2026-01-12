@@ -2,11 +2,11 @@ package com.example.llmchat.domain.llm.impl
 
 import com.example.llmchat.data.model.Message
 import com.example.llmchat.domain.llm.LLMProvider
-import dev.koog.agents.AIAgent
-import dev.koog.agents.core.prompts.Prompt
-import dev.koog.agents.flow.StreamFrame
-import dev.koog.llms.GoogleModels
-import dev.koog.llms.simpleGoogleExecutor
+import ai.koog.agents.AIAgent
+import ai.koog.agents.core.prompts.Prompt
+import ai.koog.agents.flow.StreamFrame
+import ai.koog.llms.GoogleModels
+import ai.koog.llms.simpleGoogleExecutor
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 

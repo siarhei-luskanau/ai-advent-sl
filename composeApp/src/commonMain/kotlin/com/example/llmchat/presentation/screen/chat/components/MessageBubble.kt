@@ -28,7 +28,7 @@ fun MessageBubble(
     isStreaming: Boolean = false
 ) {
     val isUser = message.role == "user"
-    val alignment = if (isUser) Alignment.End else Alignment.Start
+    val alignment = if (isUser) Alignment.CenterEnd else Alignment.CenterStart
     val backgroundColor = if (isUser) {
         MaterialTheme.colorScheme.primaryContainer
     } else {

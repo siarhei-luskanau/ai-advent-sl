@@ -3,6 +3,7 @@ package com.example.llmchat.data.local.datastore
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
 import kotlinx.cinterop.ExperimentalForeignApi
+import okio.Path.Companion.toPath
 import platform.Foundation.NSDocumentDirectory
 import platform.Foundation.NSFileManager
 import platform.Foundation.NSUserDomainMask
@@ -24,5 +25,5 @@ actual fun createDataStore(): DataStore<Preferences> {
 
 private fun createDataStoreWithPath(producePath: () -> String): DataStore<Preferences> =
     androidx.datastore.preferences.core.PreferenceDataStoreFactory.createWithPath(
-        produceFile = { producePath().let { kotlinx.io.files.Path(it) } }
+        produceFile = { producePath().toPath() }
     )
