@@ -32,3 +32,23 @@ google-services.json
 
 # Android Profiling
 *.hprof
+
+# Kotlin Multiplatform
+.kotlin/
+xcuserdata/
+*.xcworkspace
+*.xcodeproj/xcuserdata/
+
+# iOS
+**/iosApp/Pods/
+**/iosApp/*.xcodeproj/
+**/iosApp/*.xcworkspace/
+
+# Room schemas
+**/schemas/
+
+# macOS
+.DS_Store
+
+# Desktop distribution
+**/desktop/build/compose/binaries/
