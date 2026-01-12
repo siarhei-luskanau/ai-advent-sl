@@ -8,9 +8,9 @@ import com.example.aiadvent.ui.chat.ChatScreen
 
 @Composable
 fun AppNavigation() {
-    val navController = androidx.navigation.compose.rememberNavController()
+    val navController = rememberNavController()
 
-    androidx.navigation.compose.NavHost(
+    NavHost(
         navController = navController,
         startDestination = "chat"
     ) {
