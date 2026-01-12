@@ -3,7 +3,7 @@ agp = "8.13.2"
 androidcontextprovider = "1.0.1"
 androidx-activity = "1.12.2"
 androidx-datastore = "1.2.0"
-androidx-room = "2.8.3"
+androidx-room = "2.8.4"
 androidx-uiTest = "1.10.0"
 build-android-compileSdk = "36"
 build-android-minSdk = "30"
@@ -19,7 +19,7 @@ jetbrains-compose-material-icons = "1.7.3"
 jetbrains-compose-material3 = "1.11.0-alpha01"
 jetbrains-compose-material3-adaptive = "1.3.0-alpha03"
 jetbrains-lifecycle = "2.10.0-alpha07"
-jetbrains-navigation3 = "1.0.0"
+jetbrains-navigation3 = "1.1.0-alpha01"
 jetbrains-navigationevent = "1.0.0-rc02"
 jetbrains-savedstate = "1.4.0"
 jetbrains-window = "1.5.1"
@@ -38,8 +38,10 @@ android-tools-gradle = { module = "com.android.tools.build:gradle", version.ref 
 androidcontextprovider = { module = "io.github.kdroidfilter:androidcontextprovider", version.ref = "androidcontextprovider" }
 androidx-activity-compose = { module = "androidx.activity:activity-compose", version.ref = "androidx-activity" }
 androidx-datastore-core-okio = { module = "androidx.datastore:datastore-core-okio", version.ref = "androidx-datastore" }
+androidx-datastore-preferences-core = { module = "androidx.datastore:datastore-preferences-core", version.ref = "androidx-datastore" }
 androidx-room-compiler = { module = "androidx.room:room-compiler", version.ref = "androidx-room" }
 androidx-room-ktx = { module = "androidx.room:room-ktx", version.ref = "androidx-room" }
+androidx-room-runtime = { module = "androidx.room:room-runtime", version.ref = "androidx-room" }
 androidx-uitest-junit4 = { module = "androidx.compose.ui:ui-test-junit4", version.ref = "androidx-uiTest" }
 androidx-uitest-testManifest = { module = "androidx.compose.ui:ui-test-manifest", version.ref = "androidx-uiTest" }
 coil-bom = { module = "io.coil-kt.coil3:coil-bom", version.ref = "coil-bom" }
@@ -64,8 +66,11 @@ jetbrains-navigation3-ui = { module = "org.jetbrains.androidx.navigation3:naviga
 jetbrains-navigationevent-compose = { module = "org.jetbrains.androidx.navigationevent:navigationevent-compose", version.ref = "jetbrains-navigationevent" }
 jetbrains-savedstate-compose = { module = "org.jetbrains.androidx.savedstate:savedstate-compose", version.ref = "jetbrains-savedstate" }
 jetbrains-window-core = { module = "org.jetbrains.androidx.window:window-core", version.ref = "jetbrains-window" }
+koin-android = { module = "io.insert-koin:koin-android" }
 koin-bom = { module = "io.insert-koin:koin-bom", version.ref = "koin-bom" }
 koin-compose = { module = "io.insert-koin:koin-compose" }
+koin-compose-viewmodel = { module = "io.insert-koin:koin-compose-viewmodel" }
+koin-core = { module = "io.insert-koin:koin-core" }
 koog-agents-core = { module = "ai.koog:agents-core", version.ref = "koog" }
 koog-prompt-executor-llms-all = { module = "ai.koog:prompt-executor-llms-all", version.ref = "koog" }
 kotlin-gradle-plugin = { module = "org.jetbrains.kotlin:kotlin-gradle-plugin", version.ref = "kotlin" }
@@ -76,9 +81,12 @@ kotlinx-serialization-json = { module = "org.jetbrains.kotlinx:kotlinx-serializa
 ktlint-cli = { module = "com.pinterest.ktlint:ktlint-cli", version.ref = "ktlint" }
 ktor-bom = { module = "io.ktor:ktor-bom", version.ref = "ktor" }
 ktor-client-apache5 = { module = "io.ktor:ktor-client-apache5" }
+ktor-client-content-negotiation = { module = "io.ktor:ktor-client-content-negotiation" }
+ktor-client-core = { module = "io.ktor:ktor-client-core" }
 ktor-client-darwin = { module = "io.ktor:ktor-client-darwin" }
 ktor-client-js = { module = "io.ktor:ktor-client-js" }
 ktor-client-okhttp = { module = "io.ktor:ktor-client-okhttp" }
+ktor-serialization-kotlinx-json = { module = "io.ktor:ktor-serialization-kotlinx-json" }
 markdown-renderer = { module = "com.mikepenz:multiplatform-markdown-renderer-m3", version.ref = "markdown-renderer" }
 
 [plugins]

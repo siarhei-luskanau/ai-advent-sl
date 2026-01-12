@@ -9,7 +9,6 @@ plugins {
     alias(libs.plugins.compose.compiler)
     alias(libs.plugins.kotlinx.serialization)
     alias(libs.plugins.google.ksp)
-    alias(libs.plugins.androidx.room)
 }
 
 kotlin {
@@ -144,10 +143,6 @@ dependencies {
     add("kspDesktop", libs.androidx.room.compiler)
 
     debugImplementation(compose.uiTooling)
-}
-
-room {
-    schemaDirectory("$projectDir/schemas")
 }
 
 compose.desktop {
