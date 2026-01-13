@@ -1,32 +1,15 @@
 package ai.advent
 
-import io.ktor.client.*
-import io.ktor.client.call.*
-import io.ktor.client.engine.apache5.*
-import io.ktor.client.plugins.contentnegotiation.*
-import io.ktor.client.request.*
-import io.ktor.http.*
-import io.ktor.serialization.kotlinx.json.*
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
+import ai.koog.prompt.llm.LLMCapability
+import ai.koog.prompt.llm.LLMProvider
+import ai.koog.prompt.llm.LLModel
 import kotlinx.coroutines.runBlocking
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-
-@Serializable
-data class OllamaRequest(
-    val model: String,
-    val prompt: String,
-    val stream: Boolean = false,
-)
-
-@Serializable
-data class OllamaResponse(
-    val model: String,
-    val response: String,
-    val done: Boolean,
-)
 
 fun main() =
     runBlocking {
@@ -45,22 +28,14 @@ fun main() =
         println("Fetching interesting facts about '$topic'...")
         println()
 
-        val client =
-            HttpClient(Apache5) {
-                install(ContentNegotiation) {
-                    json(
-                        Json {
-                            ignoreUnknownKeys = true
-                            isLenient = true
-                        },
-                    )
-                }
-            }
-
-        val prompt =
+        val systemPrompt =
             """
             You are a knowledgeable assistant that provides interesting facts.
+            Always respond with valid JSON only, no additional text or explanation.
+            """.trimIndent()
 
+        val userPrompt =
+            """
             Find 5 interesting facts about $topic.
 
             Return the response as a JSON object with the following structure:
@@ -79,40 +54,34 @@ fun main() =
             """.trimIndent()
 
         try {
-            val responseText =
-                client
-                    .post("http://localhost:11434/api/generate") {
-                        contentType(ContentType.Application.Json)
-                        setBody(
-                            OllamaRequest(
-                                model = "qwen3:0.6b",
-                                prompt = prompt,
-                                stream = false,
-                            ),
-                        )
-                    }.body<String>()
+            val ollamaModel =
+                LLModel(
+                    provider = LLMProvider.Ollama,
+                    id = "qwen3:0.6b",
+                    capabilities =
+                        listOf(
+                            LLMCapability.Temperature,
+                            LLMCapability.Schema.JSON.Basic,
+                        ),
+                    contextLength = 8192,
+                )
 
-            val json = Json { ignoreUnknownKeys = true }
+            val agent =
+                AIAgent(
+                    promptExecutor = simpleOllamaAIExecutor(baseUrl = "http://localhost:11434"),
+                    llmModel = ollamaModel,
+                    systemPrompt = systemPrompt,
+                )
 
-            val content = buildString {
-                responseText.lines()
-                    .filter { it.isNotBlank() }
-                    .forEach { line ->
-                        try {
-                            val response = json.decodeFromString<OllamaResponse>(line)
-                            append(response.response)
-                        } catch (e: Exception) {
-                        }
-                    }
-            }
+            val response = agent.run(userPrompt)
 
             println("Raw LLM Response:")
             println("-".repeat(50))
-            println(content)
+            println(response)
             println("-".repeat(50))
             println()
 
-            val jsonResponse = extractJson(content)
+            val jsonResponse = extractJson(response)
 
             if (jsonResponse != null) {
                 println("Parsed JSON:")
@@ -141,8 +110,6 @@ fun main() =
             println("1. Ollama is running (try: ollama serve)")
             println("2. qwen3:0.6b model is installed (try: ollama pull qwen3:0.6b)")
             e.printStackTrace()
-        } finally {
-            client.close()
         }
     }
 
