@@ -1,7 +1,8 @@
 package ai.advent
 
 import ai.koog.agents.core.agent.AIAgent
-import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
+import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
+import ai.koog.prompt.executor.ollama.client.OllamaClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
@@ -49,9 +50,11 @@ fun main() =
                 )
 
             // Create AI agent with Koog
+            val ollamaClient = OllamaClient("http://localhost:11434")
+            ollamaClient.getModelOrNull(ollamaModel.id)
             val agent =
                 AIAgent(
-                    promptExecutor = simpleOllamaAIExecutor(baseUrl = "http://localhost:11434"),
+                    promptExecutor = SingleLLMPromptExecutor(ollamaClient),
                     llmModel = ollamaModel,
                     systemPrompt =
                         """
