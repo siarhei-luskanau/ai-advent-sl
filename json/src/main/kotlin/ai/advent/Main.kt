@@ -6,10 +6,16 @@ import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.SerialName
+import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
+
+@Serializable
+@SerialName("InterestingFacts")
+data class InterestingFacts(
+    val topic: String,
+    val facts: List<String>,
+)
 
 fun main() =
     runBlocking {
@@ -28,32 +34,8 @@ fun main() =
         println("Fetching interesting facts about '$topic'...")
         println()
 
-        val systemPrompt =
-            """
-            You are a knowledgeable assistant that provides interesting facts.
-            Always respond with valid JSON only, no additional text or explanation.
-            """.trimIndent()
-
-        val userPrompt =
-            """
-            Find 5 interesting facts about $topic.
-
-            Return the response as a JSON object with the following structure:
-            {
-                "topic": "the topic name",
-                "facts": [
-                    "fact 1",
-                    "fact 2",
-                    "fact 3",
-                    "fact 4",
-                    "fact 5"
-                ]
-            }
-
-            Return ONLY valid JSON, no additional text or explanation before or after the JSON.
-            """.trimIndent()
-
         try {
+            // Define the Ollama model with JSON schema capability
             val ollamaModel =
                 LLModel(
                     provider = LLMProvider.Ollama,
@@ -66,13 +48,39 @@ fun main() =
                     contextLength = 8192,
                 )
 
+            // Create AI agent with Koog
             val agent =
                 AIAgent(
                     promptExecutor = simpleOllamaAIExecutor(baseUrl = "http://localhost:11434"),
                     llmModel = ollamaModel,
-                    systemPrompt = systemPrompt,
+                    systemPrompt =
+                        """
+                        You are a knowledgeable assistant that provides interesting facts.
+                        You must respond with valid JSON only, following the exact structure provided.
+                        Do not include any markdown code blocks or additional text.
+                        """.trimIndent(),
                 )
 
+            // Build structured prompt with JSON schema
+            val jsonSchema =
+                """
+                {
+                  "topic": "string - the topic name",
+                  "facts": ["string - fact 1", "string - fact 2", ...]
+                }
+                """.trimIndent()
+
+            val userPrompt =
+                """
+                Find 5 interesting facts about $topic.
+
+                Respond with a JSON object matching this structure:
+                $jsonSchema
+
+                Return only the JSON object, no additional text.
+                """.trimIndent()
+
+            // Get response from agent
             val response = agent.run(userPrompt)
 
             println("Raw LLM Response:")
@@ -81,29 +89,26 @@ fun main() =
             println("-".repeat(50))
             println()
 
-            val jsonResponse = extractJson(response)
-
-            if (jsonResponse != null) {
-                println("Parsed JSON:")
-                println("-".repeat(50))
-
-                val json = Json.parseToJsonElement(jsonResponse)
-                val jsonObject = json.jsonObject
-
-                val topicName = jsonObject["topic"]?.jsonPrimitive?.content
-                val facts = jsonObject["facts"]?.jsonArray
-
-                println("Topic: $topicName")
-                println()
-                println("Facts:")
-                facts?.forEachIndexed { index, fact ->
-                    println("${index + 1}. ${fact.jsonPrimitive.content}")
+            // Parse JSON response using kotlinx.serialization
+            val json =
+                Json {
+                    ignoreUnknownKeys = true
+                    isLenient = true
                 }
-                println("-".repeat(50))
-            } else {
-                println("Warning: Could not extract valid JSON from response")
-                println("You might need to try again or use a different model.")
+
+            val cleanedResponse = extractJson(response) ?: response
+            val result = json.decodeFromString<InterestingFacts>(cleanedResponse)
+
+            // Display structured output
+            println("Parsed Structured Output:")
+            println("-".repeat(50))
+            println("Topic: ${result.topic}")
+            println()
+            println("Facts:")
+            result.facts.forEachIndexed { index, fact ->
+                println("${index + 1}. $fact")
             }
+            println("-".repeat(50))
         } catch (e: Exception) {
             println("Error: ${e.message}")
             println("\nMake sure:")
@@ -116,11 +121,24 @@ fun main() =
 fun extractJson(text: String): String? {
     val trimmed = text.trim()
 
-    val jsonStart = trimmed.indexOf('{')
-    val jsonEnd = trimmed.lastIndexOf('}')
+    // Remove markdown code blocks if present
+    val withoutMarkdown =
+        if (trimmed.startsWith("```")) {
+            trimmed
+                .lines()
+                .drop(1)
+                .dropLast(1)
+                .joinToString("\n")
+                .trim()
+        } else {
+            trimmed
+        }
+
+    val jsonStart = withoutMarkdown.indexOf('{')
+    val jsonEnd = withoutMarkdown.lastIndexOf('}')
 
     return if (jsonStart != -1 && jsonEnd != -1 && jsonEnd > jsonStart) {
-        trimmed.substring(jsonStart, jsonEnd + 1)
+        withoutMarkdown.substring(jsonStart, jsonEnd + 1)
     } else {
         null
     }
