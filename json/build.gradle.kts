@@ -1,5 +1,10 @@
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    application
+}
+
+application {
+    mainClass.set("ai.advent.MainKt")
 }
 
 java {
@@ -16,4 +21,8 @@ dependencies {
     implementation(libs.ktor.client.apache5)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(project.dependencies.platform(libs.ktor.bom))
+}
+
+tasks.named<JavaExec>("run") {
+    standardInput = System.`in`
 }
