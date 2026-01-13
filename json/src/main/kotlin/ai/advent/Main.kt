@@ -79,7 +79,7 @@ fun main() =
             """.trimIndent()
 
         try {
-            val response =
+            val responseText =
                 client
                     .post("http://localhost:11434/api/generate") {
                         contentType(ContentType.Application.Json)
@@ -90,9 +90,21 @@ fun main() =
                                 stream = false,
                             ),
                         )
-                    }.body<OllamaResponse>()
+                    }.body<String>()
 
-            val content = response.response
+            val json = Json { ignoreUnknownKeys = true }
+
+            val content = buildString {
+                responseText.lines()
+                    .filter { it.isNotBlank() }
+                    .forEach { line ->
+                        try {
+                            val response = json.decodeFromString<OllamaResponse>(line)
+                            append(response.response)
+                        } catch (e: Exception) {
+                        }
+                    }
+            }
 
             println("Raw LLM Response:")
             println("-".repeat(50))
