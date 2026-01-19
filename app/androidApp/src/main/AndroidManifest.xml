@@ -6,6 +6,7 @@
     <application
         android:icon="@android:drawable/ic_menu_compass"
         android:label="CMP template"
+        android:networkSecurityConfig="@xml/network_security_config"
         android:theme="@android:style/Theme.Material.NoActionBar">
         <activity
             android:name="template.compose.multiplatform.AppActivity"
