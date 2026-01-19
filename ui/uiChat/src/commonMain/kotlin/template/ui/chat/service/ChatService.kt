@@ -1,7 +1,8 @@
 package template.ui.chat.service
 
 import ai.koog.prompt.dsl.Prompt
-import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
+import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
+import ai.koog.prompt.executor.ollama.client.OllamaClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.LLMProvider
@@ -32,8 +33,12 @@ class OllamaChatService(
         contextLength = 8192,
     )
 
+    private val client by lazy {
+        OllamaClient(baseUrl)
+    }
+
     private val executor by lazy {
-        simpleOllamaAIExecutor(baseUrl = baseUrl)
+        SingleLLMPromptExecutor(client)
     }
 
     override suspend fun sendMessage(
@@ -46,6 +51,8 @@ class OllamaChatService(
             messages = messages,
             id = Uuid.random().toString(),
         )
+
+        client.getModelOrNull(model.id)
 
         val response = executor.execute(
             prompt = prompt,
