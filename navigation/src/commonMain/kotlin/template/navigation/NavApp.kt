@@ -9,6 +9,7 @@ import androidx.navigation3.ui.NavDisplay
 import kotlinx.serialization.Serializable
 import org.koin.compose.getKoin
 import org.koin.core.parameter.parametersOf
+import template.ui.chat.ChatScreen
 import template.ui.common.theme.AppTheme
 import template.ui.main.MainScreen
 import template.ui.splash.SplashScreen
@@ -35,6 +36,11 @@ fun NavApp() =
                             koin.get { parametersOf(it.initArg, appNavigation) }
                         }
                     }
+                    entry<AppRoutes.Chat> {
+                        ChatScreen {
+                            koin.get { parametersOf(appNavigation) }
+                        }
+                    }
                 },
         )
     }
@@ -47,4 +53,7 @@ internal sealed interface AppRoutes : NavKey {
     data class Main(
         val initArg: String,
     ) : AppRoutes
+
+    @Serializable
+    data object Chat : AppRoutes
 }

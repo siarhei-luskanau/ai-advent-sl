@@ -10,6 +10,7 @@ kotlin {
             implementation(projects.core.coreCommon)
             implementation(projects.core.corePref)
             implementation(projects.navigation)
+            implementation(projects.ui.uiChat)
             implementation(projects.ui.uiCommon)
             implementation(projects.ui.uiMain)
             implementation(projects.ui.uiSplash)

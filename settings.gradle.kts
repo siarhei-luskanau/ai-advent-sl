@@ -9,6 +9,7 @@ include(
     ":core:coreCommon",
     ":core:corePref",
     ":navigation",
+    ":ui:uiChat",
     ":ui:uiCommon",
     ":ui:uiMain",
     ":ui:uiSplash",

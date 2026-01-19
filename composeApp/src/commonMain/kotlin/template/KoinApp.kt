@@ -6,9 +6,14 @@ import org.koin.compose.KoinMultiplatformApplication
 import org.koin.core.module.Module
 import org.koin.dsl.KoinConfiguration
 import org.koin.dsl.module
+import template.core.common.DispatcherSet
+import template.core.common.OllamaUrlProvider
 import template.core.common.coreCommonModule
 import template.core.pref.corePrefModule
 import template.navigation.NavApp
+import template.ui.chat.ChatViewModel
+import template.ui.chat.service.ChatService
+import template.ui.chat.service.OllamaChatService
 import template.ui.main.MainViewModel
 import template.ui.splash.SplashViewModel
 
@@ -38,6 +43,16 @@ val appModule by lazy {
             MainViewModel(
                 initArg = it[0],
                 navigationCallback = it[1],
+            )
+        }
+        single<ChatService> {
+            OllamaChatService(baseUrl = get<OllamaUrlProvider>().getBaseUrl())
+        }
+        factory {
+            ChatViewModel(
+                chatService = get(),
+                dispatcherSet = get(),
+                navigationCallback = it[0],
             )
         }
     }

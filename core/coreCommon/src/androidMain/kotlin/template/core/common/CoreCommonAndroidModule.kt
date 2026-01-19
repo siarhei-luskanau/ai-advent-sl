@@ -6,4 +6,5 @@ actual val coreCommonModule =
     module {
         single<DispatcherSet> { DispatcherSetAndroid() }
         single<PlatformService> { PlatformServiceAndroid() }
+        single<OllamaUrlProvider> { OllamaUrlProviderAndroid() }
     }
