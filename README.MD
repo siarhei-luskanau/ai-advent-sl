@@ -4,9 +4,6 @@
 To run the application on android device/emulator:
 - open project in Android Studio and run imported android run configuration
 
-To launch ktlint, detekt and lint checks:
-- run `./gradlew ktlintCheck detekt lint`
-
 To build the application bundle:
 - run `./gradlew app:androidApp:assembleDebug app:androidApp:assembleRelease`
 - find `.apk` file in `app/androidApp/build/outputs/apk/debug/androidApp-debug.apk`
@@ -34,3 +31,6 @@ Run the browser application: `./gradlew :app:webApp:jsBrowserDevelopmentRun`
 Run the browser application: `./gradlew :app:webApp:wasmJsBrowserDevelopmentRun`  
 Run browser UI tests: `./gradlew :app:webApp:wasmJsBrowserTest`
 
+### Code style and linting
+- launch ktlintFormat: `./gradlew ktlintFormat`
+- launch ktlint, detekt and lint checks: `./gradlew ktlintCheck detekt lint`

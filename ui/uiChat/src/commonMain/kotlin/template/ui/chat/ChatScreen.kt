@@ -67,10 +67,11 @@ internal fun ChatContent(
         },
     ) { contentPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(contentPadding)
-                .imePadding(),
+            modifier =
+                Modifier
+                    .fillMaxSize()
+                    .padding(contentPadding)
+                    .imePadding(),
         ) {
             when (val state = viewState.value) {
                 ChatViewState.Loading -> {

@@ -19,13 +19,14 @@ class ChatViewModel(
     private val dispatcherSet: DispatcherSet,
     private val navigationCallback: ChatNavigationCallback,
 ) : ViewModel() {
-    val viewState = MutableStateFlow<ChatViewState>(
-        ChatViewState.Success(
-            messages = emptyList(),
-            isGenerating = false,
-            inputText = "",
+    val viewState =
+        MutableStateFlow<ChatViewState>(
+            ChatViewState.Success(
+                messages = emptyList(),
+                isGenerating = false,
+                inputText = "",
+            ),
         )
-    )
 
     private var lastUserMessage: String? = null
 
@@ -50,11 +51,12 @@ class ChatViewModel(
             }
 
             ChatViewEvent.ClearConversation -> {
-                viewState.value = ChatViewState.Success(
-                    messages = emptyList(),
-                    isGenerating = false,
-                    inputText = "",
-                )
+                viewState.value =
+                    ChatViewState.Success(
+                        messages = emptyList(),
+                        isGenerating = false,
+                        inputText = "",
+                    )
                 lastUserMessage = null
             }
         }
@@ -71,62 +73,75 @@ class ChatViewModel(
         if (text.isBlank()) return
 
         val currentState = viewState.value
-        val currentMessages = when (currentState) {
-            is ChatViewState.Success -> currentState.messages
-            is ChatViewState.Error -> currentState.messages
-            ChatViewState.Loading -> emptyList()
-        }
+        val currentMessages =
+            when (currentState) {
+                is ChatViewState.Success -> currentState.messages
+                is ChatViewState.Error -> currentState.messages
+                ChatViewState.Loading -> emptyList()
+            }
 
         lastUserMessage = text
 
-        val userMessage = ChatMessage(
-            id = Uuid.random().toString(),
-            role = MessageRole.USER,
-            content = text,
-            timestamp = Clock.System.now(),
-        )
+        val userMessage =
+            ChatMessage(
+                id = Uuid.random().toString(),
+                role = MessageRole.USER,
+                content = text,
+                timestamp = Clock.System.now(),
+            )
 
         val updatedMessages = currentMessages + userMessage
 
-        viewState.value = ChatViewState.Success(
-            messages = updatedMessages,
-            isGenerating = true,
-            inputText = "",
-        )
+        viewState.value =
+            ChatViewState.Success(
+                messages = updatedMessages,
+                isGenerating = true,
+                inputText = "",
+            )
 
         viewModelScope.launch(dispatcherSet.ioDispatcher()) {
-            chatService.sendMessage(text, currentMessages)
+            chatService
+                .sendMessage(text, currentMessages)
                 .onSuccess { response ->
-                    val assistantMessage = ChatMessage(
-                        id = Uuid.random().toString(),
-                        role = MessageRole.ASSISTANT,
-                        content = response,
-                        timestamp = Clock.System.now(),
-                    )
+                    val assistantMessage =
+                        ChatMessage(
+                            id = Uuid.random().toString(),
+                            role = MessageRole.ASSISTANT,
+                            content = response,
+                            timestamp = Clock.System.now(),
+                        )
                     viewState.update { state ->
                         when (state) {
-                            is ChatViewState.Success -> state.copy(
-                                messages = state.messages + assistantMessage,
-                                isGenerating = false,
-                            )
-                            is ChatViewState.Error -> ChatViewState.Success(
-                                messages = state.messages + assistantMessage,
-                                isGenerating = false,
-                            )
-                            ChatViewState.Loading -> ChatViewState.Success(
-                                messages = listOf(assistantMessage),
-                                isGenerating = false,
-                            )
+                            is ChatViewState.Success -> {
+                                state.copy(
+                                    messages = state.messages + assistantMessage,
+                                    isGenerating = false,
+                                )
+                            }
+
+                            is ChatViewState.Error -> {
+                                ChatViewState.Success(
+                                    messages = state.messages + assistantMessage,
+                                    isGenerating = false,
+                                )
+                            }
+
+                            ChatViewState.Loading -> {
+                                ChatViewState.Success(
+                                    messages = listOf(assistantMessage),
+                                    isGenerating = false,
+                                )
+                            }
                         }
                     }
-                }
-                .onFailure { error ->
+                }.onFailure { error ->
                     viewState.update { state ->
-                        val messages = when (state) {
-                            is ChatViewState.Success -> state.messages
-                            is ChatViewState.Error -> state.messages
-                            ChatViewState.Loading -> emptyList()
-                        }
+                        val messages =
+                            when (state) {
+                                is ChatViewState.Success -> state.messages
+                                is ChatViewState.Error -> state.messages
+                                ChatViewState.Loading -> emptyList()
+                            }
                         ChatViewState.Error(
                             error = error,
                             messages = messages,
