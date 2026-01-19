@@ -57,8 +57,13 @@ kotlin {
             implementation(libs.jetbrains.savedstate.compose)
             implementation(libs.jetbrains.window.core)
             implementation(libs.koin.compose)
+            implementation(libs.koog.agents)
             implementation(libs.kotlinx.coroutines.core)
+            implementation(libs.kotlinx.datetime)
+            implementation(libs.kotlinx.serialization.json)
+            implementation(libs.markdown.renderer)
             implementation(project.dependencies.platform(libs.koin.bom))
+            implementation(project.dependencies.platform(libs.ktor.bom))
         }
 
         commonTest.dependencies {
@@ -67,6 +72,7 @@ kotlin {
         }
 
         androidMain.dependencies {
+            implementation(libs.ktor.client.okhttp)
         }
 
         getByName("androidHostTest") {
@@ -77,14 +83,17 @@ kotlin {
         }
 
         jvmMain.dependencies {
+            implementation(libs.ktor.client.apache5)
             implementation(compose.desktop.currentOs)
             implementation(libs.kotlinx.coroutines.swing)
         }
 
         iosMain.dependencies {
+            implementation(libs.ktor.client.darwin)
         }
 
         webMain.dependencies {
+            implementation(libs.ktor.client.js)
         }
     }
 
