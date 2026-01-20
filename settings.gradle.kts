@@ -1,4 +1,4 @@
-rootProject.name = "ai-advent-day-06"
+rootProject.name = "ai-advent-day-07"
 
 include(":quality")
 

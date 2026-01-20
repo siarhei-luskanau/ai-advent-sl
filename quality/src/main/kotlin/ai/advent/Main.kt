@@ -1,23 +1,29 @@
 package ai.advent
 
-import ai.koog.agents.core.agent.AIAgent
-import ai.koog.prompt.executor.llms.all.simpleOllamaAIExecutor
+import ai.koog.prompt.dsl.prompt
+import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
+import ai.koog.prompt.executor.ollama.client.OllamaClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.llm.OllamaModels
 import kotlinx.coroutines.runBlocking
+import java.util.UUID
 import kotlin.time.measureTimedValue
 
 data class ModelResponse(
     val modelId: String,
     val response: String,
     val durationMs: Long,
-    val estimatedTokens: Int,
+    val inputTokens: Int,
+    val outputTokens: Int,
+    val totalTokens: Int,
 )
 
 fun main() =
     runBlocking {
+        val baseUrl = "http://localhost:11434"
+
         // https://ollama.com/library/llama2
         val llama2Model =
             LLModel(
@@ -48,25 +54,8 @@ fun main() =
         val qwen3Model = OllamaModels.Alibaba.QWEN_3_06B
 
         try {
-            val executor = simpleOllamaAIExecutor(baseUrl = "http://localhost:11434")
-
-            val llama2Agent =
-                AIAgent(
-                    promptExecutor = executor,
-                    llmModel = llama2Model,
-                )
-
-            val glm47Agent =
-                AIAgent(
-                    promptExecutor = executor,
-                    llmModel = glm47Model,
-                )
-
-            val qwen3Agent =
-                AIAgent(
-                    promptExecutor = executor,
-                    llmModel = qwen3Model,
-                )
+            val llmClient = OllamaClient(baseUrl = baseUrl)
+            val promptExecutor = SingleLLMPromptExecutor(llmClient)
 
             val query = "Объясни ход решения: 2 плюс 2 умножить на 2"
 
@@ -80,64 +69,93 @@ fun main() =
             println("Модель: ${llama2Model.id}")
             println("-".repeat(80))
 
+            val llama2Prompt =
+                prompt(id = UUID.randomUUID().toString()) {
+                    user {
+                        text(text = query)
+                    }
+                }
+
             val llama2Result =
                 measureTimedValue {
-                    llama2Agent.run(query)
+                    promptExecutor.execute(prompt = llama2Prompt, model = llama2Model).single()
                 }
             val llama2Response =
                 ModelResponse(
                     modelId = llama2Model.id,
-                    response = llama2Result.value,
+                    response = llama2Result.value.content,
                     durationMs = llama2Result.duration.inWholeMilliseconds,
-                    estimatedTokens = estimateTokens(query) + estimateTokens(llama2Result.value),
+                    inputTokens = llama2Result.value.metaInfo.inputTokensCount ?: 0,
+                    outputTokens = llama2Result.value.metaInfo.outputTokensCount ?: 0,
+                    totalTokens = llama2Result.value.metaInfo.totalTokensCount ?: 0,
                 )
 
             println("Ответ:\n${llama2Response.response}")
             println("\nМетрики:")
             println("  Время ответа: ${llama2Response.durationMs} мс")
-            println("  Токенов (оценка): ${llama2Response.estimatedTokens}")
+            println("  Входных токенов: ${llama2Response.inputTokens}")
+            println("  Выходных токенов: ${llama2Response.outputTokens}")
+            println("  Всего токенов: ${llama2Response.totalTokens}")
 
             // Execute query on glm-4.7-flash
             println("\n" + "-".repeat(80))
             println("Модель: ${glm47Model.id}")
             println("-".repeat(80))
 
+            val glm47Prompt =
+                prompt(id = UUID.randomUUID().toString()) {
+                    user {
+                        text(text = query)
+                    }
+                }
+
             val glm47Result =
                 measureTimedValue {
-                    glm47Agent.run(query)
+                    promptExecutor.execute(prompt = glm47Prompt, model = glm47Model).single()
                 }
             val glm47Response =
                 ModelResponse(
                     modelId = glm47Model.id,
-                    response = glm47Result.value,
+                    response = glm47Result.value.content,
                     durationMs = glm47Result.duration.inWholeMilliseconds,
-                    estimatedTokens = estimateTokens(query) + estimateTokens(glm47Result.value),
+                    inputTokens = glm47Result.value.metaInfo.inputTokensCount ?: 0,
+                    outputTokens = glm47Result.value.metaInfo.outputTokensCount ?: 0,
+                    totalTokens = glm47Result.value.metaInfo.totalTokensCount ?: 0,
                 )
 
             println("Ответ:\n${glm47Response.response}")
             println("\nМетрики:")
             println("  Время ответа: ${glm47Response.durationMs} мс")
-            println("  Токенов (оценка): ${glm47Response.estimatedTokens}")
+            println("  Входных токенов: ${glm47Response.inputTokens}")
+            println("  Выходных токенов: ${glm47Response.outputTokens}")
+            println("  Всего токенов: ${glm47Response.totalTokens}")
 
             // Compare quality using Qwen3 as judge
             println("\n" + "=".repeat(80))
             println("ОЦЕНКА КАЧЕСТВА (судья: ${qwen3Model.id})")
             println("=".repeat(80))
 
-            val comparisonPrompt =
+            val comparisonPromptText =
                 buildComparisonPrompt(
                     query = query,
                     response1 = llama2Response,
                     response2 = glm47Response,
                 )
 
+            val qwen3Prompt =
+                prompt(id = UUID.randomUUID().toString()) {
+                    user {
+                        text(text = comparisonPromptText)
+                    }
+                }
+
             val qualityResult =
                 measureTimedValue {
-                    qwen3Agent.run(comparisonPrompt)
+                    promptExecutor.execute(prompt = qwen3Prompt, model = qwen3Model).single()
                 }
 
             println("\nАнализ качества ответов:\n")
-            println(qualityResult.value)
+            println(qualityResult.value.content)
 
             // Summary table
             println("\n" + "=".repeat(80))
@@ -145,52 +163,52 @@ fun main() =
             println("=".repeat(80))
             println(
                 String.format(
-                    "%-25s | %-15s | %-15s | %-10s",
+                    "%-25s | %-15s | %-15s | %-15s | %-10s",
                     "Модель",
                     "Время (мс)",
-                    "Токены",
+                    "Вход. токены",
+                    "Выход. токены",
                     "Скорость",
                 ),
             )
             println("-".repeat(80))
 
-            val llama2CompletionTokens = estimateTokens(llama2Response.response)
-            val glm47CompletionTokens = estimateTokens(glm47Response.response)
-
             val llama2Speed =
                 if (llama2Response.durationMs > 0) {
-                    llama2CompletionTokens * 1000.0 / llama2Response.durationMs
+                    llama2Response.outputTokens * 1000.0 / llama2Response.durationMs
                 } else {
                     0.0
                 }
             val glm47Speed =
                 if (glm47Response.durationMs > 0) {
-                    glm47CompletionTokens * 1000.0 / glm47Response.durationMs
+                    glm47Response.outputTokens * 1000.0 / glm47Response.durationMs
                 } else {
                     0.0
                 }
 
             println(
                 String.format(
-                    "%-25s | %-15d | %-15d | %.1f tok/s",
+                    "%-25s | %-15d | %-15d | %-15d | %.1f tok/s",
                     llama2Response.modelId,
                     llama2Response.durationMs,
-                    llama2Response.estimatedTokens,
+                    llama2Response.inputTokens,
+                    llama2Response.outputTokens,
                     llama2Speed,
                 ),
             )
             println(
                 String.format(
-                    "%-25s | %-15d | %-15d | %.1f tok/s",
+                    "%-25s | %-15d | %-15d | %-15d | %.1f tok/s",
                     glm47Response.modelId,
                     glm47Response.durationMs,
-                    glm47Response.estimatedTokens,
+                    glm47Response.inputTokens,
+                    glm47Response.outputTokens,
                     glm47Speed,
                 ),
             )
             println("=".repeat(80))
 
-            executor.close()
+            llmClient.close()
         } catch (e: Exception) {
             println("Ошибка: ${e.message}")
             println("\nУбедитесь что:")
@@ -201,11 +219,6 @@ fun main() =
             e.printStackTrace()
         }
     }
-
-private fun estimateTokens(text: String): Int {
-    // Rough estimation: ~3.5 characters per token for Russian text
-    return (text.length / 3.5).toInt().coerceAtLeast(1)
-}
 
 private fun buildComparisonPrompt(
     query: String,
