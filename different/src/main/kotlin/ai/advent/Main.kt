@@ -207,16 +207,5 @@ fun parseExperts(response: String): List<String> {
         }
     }
 
-    // If parsing failed, return default experts
-    if (experts.isEmpty()) {
-        return listOf(
-            "Software Architect",
-            "Product Manager",
-            "UX Designer",
-            "DevOps Engineer",
-            "Security Expert",
-        )
-    }
-
-    return experts.take(5)
+    return experts
 }
