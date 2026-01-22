@@ -18,6 +18,7 @@ data class PromptResult(
     val inputTokens: Int,
     val outputTokens: Int,
     val totalTokens: Int,
+    val promptText: String,
     val responseText: String,
     val contextLimit: Long,
     val isOverflow: Boolean,
@@ -75,6 +76,7 @@ suspend fun executeAndMeasure(
         inputTokens = inputTokens,
         outputTokens = outputTokens,
         totalTokens = totalTokens,
+        promptText = userMessage,
         responseText = response.content,
         contextLimit = model.contextLength,
         // Overflow detected when input exceeds OR equals context limit (truncation)
@@ -101,9 +103,11 @@ fun printResult(result: PromptResult) {
         }
     println("Overflow:      $overflowStatus")
     println("-".repeat(60))
-    println("Response (first 500 chars):")
-    println(result.responseText.take(500))
-    if (result.responseText.length > 500) println("...")
+    println("Prompt:")
+    println(result.promptText)
+    println("-".repeat(60))
+    println("Response:")
+    println(result.responseText)
     println("=".repeat(60))
 }
 
@@ -225,7 +229,7 @@ fun main() =
             val mediumText = generateLongText(targetTokens = 1000) // ~1000 tokens
             val mediumPrompt =
                 """
-                Please summarize the key points from the following text in 2-3 sentences:
+                Please summarize the key points from the following text in 2-3 sentences, about 32 words:
 
                 $mediumText
                 """.trimIndent()
@@ -245,8 +249,7 @@ fun main() =
             val overflowText = generateLongText(targetTokens = 3000) // ~3000 tokens - exceeds 2K limit
             val overflowPrompt =
                 """
-                Please analyze and summarize the following extensive text. Identify the main themes
-                and provide a comprehensive summary:
+                Please summarize the key points from the following text in 2-3 sentences, about 32 words:
 
                 $overflowText
                 """.trimIndent()
@@ -270,6 +273,7 @@ fun main() =
                         inputTokens = 3000, // Estimated
                         outputTokens = 0,
                         totalTokens = 3000,
+                        promptText = overflowPrompt,
                         responseText = "ERROR: ${e.message}",
                         contextLimit = tinyLlamaModel.contextLength,
                         isOverflow = true,
