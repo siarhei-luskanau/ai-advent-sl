@@ -1,0 +1,260 @@
+> Task :tokens:run
+Token Counting & Context Overflow Analysis
+==========================================
+Token Counter Model: tinyllama:1.1b (context: 2048 tokens)
+Analyzer Model: qwen3:0.6b
+
+Checking model availability...
+Both models available!
+
+Running Experiment 1: Short prompt...
+
+============================================================
+PROMPT: Short Prompt (~50 tokens)
+============================================================
+Context Limit: 2048 tokens
+Input Tokens:  49
+Output Tokens: 45
+Total Tokens:  94
+Overflow:      No
+------------------------------------------------------------
+Prompt:
+What is 2 + 2? Answer briefly.
+------------------------------------------------------------
+Response:
+Answer: 2 + 2 = 4
+
+2 + 2 = 4, which represents the answer to the question "what is 2 + 2?" in a concise and clear way.
+============================================================
+
+Running Experiment 2: Medium prompt...
+
+============================================================
+PROMPT: Medium Prompt (~1000 tokens)
+============================================================
+Context Limit: 2048 tokens
+Input Tokens:  906
+Output Tokens: 81
+Total Tokens:  987
+Overflow:      No
+------------------------------------------------------------
+Prompt:
+                Please summarize the key points from the following text in 2-3 sentences, about 32 words:
+
+                The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might tr
+------------------------------------------------------------
+Response:
+The key points from the following text are:
+
+- Understanding the limited context window limits of machine learning models and their potential consequences on output quality.
+- Exploring examples where these limits have been exceeded and their impact on interesting behavior in AI applications.
+- Understanding how these limitations can be mitigated or improved through better understanding of the underlying algorithms and training data.
+============================================================
+
+Running Experiment 3: Overflow prompt (exceeding 2048 token limit)...
+
+============================================================
+PROMPT: Overflow Prompt (~3000 tokens, exceeds 2K limit)
+============================================================
+Context Limit: 2048 tokens
+Input Tokens:  2048
+Output Tokens: 133
+Total Tokens:  2181
+Overflow:      YES - AT LIMIT (likely truncated)
+------------------------------------------------------------
+Prompt:
+                Please summarize the key points from the following text in 2-3 sentences, about 32 words:
+
+                The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us explore what happens when we push these boundaries. The quick brown fox jumps over the lazy dog. This is a sample sentence used to generate
+a large amount of text for testing context window limits. Machine learning models have
+limited context windows that determine how much text they can process at once. When we
+exceed this limit, interesting behaviors can occur. The model might truncate input,
+produce degraded outputs, or fail entirely. Understanding these limits is crucial for
+building robust AI applications. Let us
+------------------------------------------------------------
+Response:
+To understand the impact of context on the accuracy of speech recognition algorithms, researchers from UC Davis and UC Berkeley conducted a study using four datasets of varying lengths and spoken English text. The authors used a variation of Google's TensorFlow Lite toolkit for real-time inference in Android devices. They found that longer texts resulted in lower error rates than shorter ones, with the best results achieved with inputs up to 50 seconds. Additionally, the use of contextual information such as sentence structure and dialogue history was found to significantly improve accuracy. The authors conclude that contextual information is essential for real-time speech recognition applications.
+============================================================
+
+
+############################################################
+ANALYSIS: Using qwen3:0.6b to analyze context overflow behavior
+############################################################
+
+Analyzing with qwen3:0.6b...
+
+--- ANALYSIS RESULTS ---
+Analysis Input Tokens:  349
+Analysis Output Tokens: 859
+------------------------------------------------------------
+1. **Token Count and Response Quality**:
+   When token count is within the 2048 limit, the model generates high-quality responses (e.g., "Answer: 2 + 2 = 4"). In medium prompts (906 tokens), the response quality improves, indicating the model can handle more context without losing clarity. In overflow cases (2048 tokens), response quality decreases, but the model still adheres to the output limit, suggesting it handles context but may prioritize brevity over accuracy.
+
+2. **Context Overflow and Model Behavior**:
+   When context overflows, the model struggles to maintain quality, leading to lower response quality (e.g., "To understand..."). However, the output remains within the token limit, suggesting the model uses available context effectively. Best practices include using available context, trimming output when necessary, and ensuring the model has sufficient resources to process the overflow.
+
+3. **Best Practices to Avoid Overflow**:
+   To avoid context overflow, ensure the model has access to sufficient context, use context that aligns with the prompt, and trim output when the overflow is significant. This helps maintain quality while respecting the token limit.
+############################################################
+
+
+SUMMARY TABLE
+================================================================================
+Prompt                              |      Input |     Output |      Total | Overflow
+--------------------------------------------------------------------------------
+Short Prompt (~50 tokens)           |         49 |         45 |         94 |       No
+Medium Prompt (~1000 tokens)        |        906 |         81 |        987 |       No
+Overflow Prompt (~3000 tokens, exce |       2048 |        133 |       2181 |      YES
+================================================================================
+
+Experiment completed successfully!
+
+BUILD SUCCESSFUL in 12s
