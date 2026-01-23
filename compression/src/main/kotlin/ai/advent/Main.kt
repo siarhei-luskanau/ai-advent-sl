@@ -1,5 +1,11 @@
 package ai.advent
 
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.agents.core.agent.config.AIAgentConfig
+import ai.koog.agents.core.agent.entity.createStorageKey
+import ai.koog.agents.core.dsl.builder.forwardTo
+import ai.koog.agents.core.dsl.builder.strategy
+import ai.koog.agents.core.dsl.extension.replaceHistoryWithTLDR
 import ai.koog.prompt.dsl.prompt
 import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
 import ai.koog.prompt.executor.ollama.client.OllamaClient
@@ -50,144 +56,129 @@ data class ChatMessage(
     val timestamp: String = Clock.System.now().toString(),
 )
 
+// Storage keys for agent state
+val messageCountKey = createStorageKey<Int>("messageCount")
+val compressionCountKey = createStorageKey<Int>("compressionCount")
+
+/**
+ * Creates a chat agent strategy using Koog's writeSession and replaceHistoryWithTLDR for history compression.
+ *
+ * The strategy defines a simple graph:
+ * - A chat node that processes user input, gets LLM response, and handles compression internally
+ */
+fun createChatStrategy(compressionThreshold: Int) =
+    strategy("chat-with-compression") {
+        // Node: Process chat message, get response, and compress if needed
+        val chatWithCompressionNode by node<String, String>("chat-with-compression") { userMessage ->
+            // Append user message and get LLM response
+            val response =
+                llm.writeSession {
+                    appendPrompt { user(userMessage) }
+                    requestLLMWithoutTools()
+                }
+
+            // Track message count after getting response (+2 for user + assistant)
+            val currentCount = (storage.get(messageCountKey) ?: 0) + 2
+            storage.set(messageCountKey, currentCount)
+
+            // Check if compression is needed
+            if (currentCount > compressionThreshold) {
+                // Get current message count before compression
+                val countBefore = llm.readSession { prompt.messages.size }
+
+                // Use Koog's writeSession with replaceHistoryWithTLDR for history compression
+                llm.writeSession {
+                    replaceHistoryWithTLDR()
+                }
+
+                // Get message count after compression
+                val countAfter = llm.readSession { prompt.messages.size }
+
+                // Track compression stats
+                val compressionNum = (storage.get(compressionCountKey) ?: 0) + 1
+                storage.set(compressionCountKey, compressionNum)
+
+                // Reset message count after compression
+                storage.set(messageCountKey, 2)
+
+                println()
+                println("${Colors.YELLOW}${Colors.BOLD}[!] HISTORY COMPRESSED (using replaceHistoryWithTLDR)${Colors.RESET}")
+                println("${Colors.YELLOW}    Messages: $countBefore -> $countAfter${Colors.RESET}")
+                println("${Colors.YELLOW}    Compression #$compressionNum${Colors.RESET}")
+                println()
+            }
+
+            response.content
+        }
+
+        // Define the graph edges: start -> chat -> finish
+        edge(nodeStart forwardTo chatWithCompressionNode)
+        edge(chatWithCompressionNode forwardTo nodeFinish)
+    }
+
+/**
+ * Chat session that uses AIAgent with writeSession and replaceHistoryWithTLDR for compression.
+ */
 class ChatSession(
     private val executor: SingleLLMPromptExecutor,
     private val model: LLModel,
     private val compressionThreshold: Int = 8,
     private val systemPrompt: String,
 ) {
-    private val history = mutableListOf<ChatMessage>()
     val stats = SessionStats()
     val sessionId = UUID.randomUUID().toString().take(8)
     val startTime = Clock.System.now().toString()
 
+    // Create the agent with our compression strategy
+    private val agent =
+        AIAgent(
+            promptExecutor = executor,
+            strategy = createChatStrategy(compressionThreshold),
+            agentConfig =
+                AIAgentConfig(
+                    prompt =
+                        prompt("chat-session") {
+                            system(systemPrompt)
+                        },
+                    model = model,
+                    maxAgentIterations = 50,
+                ),
+        )
+
+    // Track conversation for display purposes
+    private val conversationHistory = mutableListOf<ChatMessage>()
+
     init {
-        history.add(ChatMessage("system", systemPrompt))
+        conversationHistory.add(ChatMessage("system", systemPrompt))
     }
 
     suspend fun chat(userInput: String): String {
-        // Add user message to history
-        history.add(ChatMessage("user", userInput))
+        // Track user message
+        conversationHistory.add(ChatMessage("user", userInput))
         stats.userMessageCount++
-
-        // Check if compression is needed before sending
-        val shouldCompress = history.count { it.role != "system" } > compressionThreshold
-        if (shouldCompress) {
-            compressHistory()
-        }
-
-        // Build prompt from history
-        val chatPrompt =
-            prompt(id = "chat-$sessionId-${stats.llmCallCount}") {
-                for (msg in history) {
-                    when (msg.role) {
-                        "system" -> system(msg.content)
-                        "user" -> user { text(msg.content) }
-                        "assistant" -> assistant(msg.content)
-                        "summary" -> system("[Conversation Summary]\n${msg.content}")
-                    }
-                }
-            }
-
-        // Execute LLM call
         stats.llmCallCount++
-        val response = executor.execute(prompt = chatPrompt, model = model).single()
 
-        // Track token usage
-        stats.totalInputTokens += response.metaInfo.inputTokensCount ?: 0
-        stats.totalOutputTokens += response.metaInfo.outputTokensCount ?: 0
+        // Run the agent with user input
+        val result = agent.run(userInput)
 
-        // Extract response content - response is LLMResponse which contains the text
-        val assistantResponse = response.content
+        // Extract response
+        val assistantResponse = result
 
-        // Add assistant response to history
-        history.add(ChatMessage("assistant", assistantResponse))
+        // Track assistant response
+        conversationHistory.add(ChatMessage("assistant", assistantResponse))
         stats.assistantMessageCount++
+
+        // Update compression count from agent storage if it changed
+        // Note: In a full implementation, we'd access agent storage here
 
         return assistantResponse
     }
 
-    private suspend fun compressHistory() {
-        val messagesBefore = history.count { it.role != "system" }
-        stats.messagesBeforeCompression = messagesBefore
+    fun getHistoryCount(): Int = conversationHistory.size
 
-        println()
-        println("${Colors.YELLOW}${Colors.BOLD}[!] COMPRESSING HISTORY${Colors.RESET}")
-        println("${Colors.YELLOW}    Current messages: $messagesBefore${Colors.RESET}")
-        println("${Colors.YELLOW}    Generating summary...${Colors.RESET}")
+    fun getMessageCount(): Int = conversationHistory.count { it.role != "system" }
 
-        // Build conversation text for summarization (exclude system prompt)
-        val conversationText =
-            history
-                .filter { it.role != "system" && it.role != "summary" }
-                .joinToString("\n") { "${it.role.uppercase()}: ${it.content}" }
-
-        // Create summarization prompt
-        val summaryPrompt =
-            prompt(id = "compress-$sessionId-${stats.compressionCount}") {
-                system(
-                    """You are a conversation summarizer. Your task is to create a concise summary
-                |of the conversation that preserves all important information, context, and any
-                |decisions or agreements made. The summary should allow the conversation to
-                |continue naturally.
-                |
-                |Format: Write a clear, structured summary in 2-4 sentences.
-                    """.trimMargin(),
-                )
-                user {
-                    text("Please summarize this conversation:\n\n$conversationText")
-                }
-            }
-
-        // Execute summarization
-        stats.llmCallCount++
-        val summaryResponse = executor.execute(prompt = summaryPrompt, model = model).single()
-        stats.totalInputTokens += summaryResponse.metaInfo.inputTokensCount ?: 0
-        stats.totalOutputTokens += summaryResponse.metaInfo.outputTokensCount ?: 0
-
-        val summary = summaryResponse.content
-
-        // Keep system prompt and replace conversation with summary
-        val systemMessage = history.first { it.role == "system" }
-        history.clear()
-        history.add(systemMessage)
-        history.add(ChatMessage("summary", summary))
-
-        val messagesAfter = history.count { it.role != "system" }
-        stats.messagesAfterCompression = messagesAfter
-        stats.compressionCount++
-
-        // Record compression event
-        stats.compressionHistory.add(
-            CompressionEvent(
-                timestamp = Clock.System.now().toString(),
-                messagesBefore = messagesBefore,
-                messagesAfter = messagesAfter,
-                summary = summary.take(100) + if (summary.length > 100) "..." else "",
-            ),
-        )
-
-        printCompressionResult(messagesBefore, messagesAfter, summary)
-    }
-
-    private fun printCompressionResult(
-        before: Int,
-        after: Int,
-        summary: String,
-    ) {
-        val reduction = if (before > 0) ((before - after).toFloat() / before * 100).toInt() else 0
-        println()
-        println("${Colors.YELLOW}${Colors.BOLD}[*] COMPRESSION COMPLETE #${stats.compressionCount}${Colors.RESET}")
-        println("${Colors.YELLOW}    Messages: $before -> $after (reduced by $reduction%)${Colors.RESET}")
-        println("${Colors.YELLOW}    Summary: ${summary.take(80)}...${Colors.RESET}")
-        println()
-    }
-
-    fun getHistoryCount(): Int = history.size
-
-    fun getMessageCount(): Int = history.count { it.role != "system" }
-
-    fun getCurrentHistory(): List<ChatMessage> = history.toList()
+    fun getCurrentHistory(): List<ChatMessage> = conversationHistory.toList()
 }
 
 fun main() =
@@ -197,18 +188,18 @@ fun main() =
         println("${Colors.CYAN}${Colors.BOLD}+============================================================+${Colors.RESET}")
         println()
 
-        // https://ollama.com/library/glm-4.7-flash
+        // TinyLlama model with 2K context - used for token counting experiments
+        // https://ollama.com/library/tinyllama
         val model =
             LLModel(
                 provider = LLMProvider.Ollama,
-                id = "glm-4.7-flash:q4_K_M",
+                id = "tinyllama:1.1b",
                 capabilities =
                     listOf(
                         LLMCapability.Temperature,
-                        LLMCapability.Tools,
                         LLMCapability.Schema.JSON.Basic,
                     ),
-                contextLength = 198 * 1024,
+                contextLength = 2 * 1024, // 2048 tokens
             )
 
         println("${Colors.GRAY}Connecting to Ollama at http://localhost:11434...${Colors.RESET}")
