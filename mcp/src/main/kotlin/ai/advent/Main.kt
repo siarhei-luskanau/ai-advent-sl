@@ -1,52 +1,112 @@
 package ai.advent
 
-import ai.koog.prompt.dsl.prompt
+import ai.koog.agents.core.agent.AIAgent
+import ai.koog.agents.mcp.McpToolRegistryProvider
+import ai.koog.agents.mcp.defaultStdioTransport
 import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
 import ai.koog.prompt.executor.ollama.client.OllamaClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
 import kotlinx.coroutines.runBlocking
-import java.util.UUID
 
 fun main() =
     runBlocking {
-        // https://ollama.com/library/glm-4.7-flash
-        val glm47flashModel =
+        println("=".repeat(70))
+        println("MCP Server Tool Discovery Application")
+        println("Using Koog library with local Ollama client")
+        println("=".repeat(70))
+        println()
+
+        // Configure Ollama model
+        val ollamaModel =
             LLModel(
                 provider = LLMProvider.Ollama,
-                id = "glm-4.7-flash:q4_K_M",
+                id = "gpt-oss:20b",
                 capabilities =
                     listOf(
+                        LLMCapability.Completion,
+                        LLMCapability.Schema.JSON.Standard,
+                        LLMCapability.Speculation,
                         LLMCapability.Temperature,
+                        LLMCapability.ToolChoice,
                         LLMCapability.Tools,
-                        LLMCapability.Schema.JSON.Basic,
                     ),
-                contextLength = 198 * 1024,
+                contextLength = 128_000,
             )
 
-        try {
-            val ollamaClient = OllamaClient("http://localhost:11434")
-            val executor = SingleLLMPromptExecutor(ollamaClient)
-            ollamaClient.getModelOrNull(glm47flashModel.id)
+        // Initialize Ollama client
+        val ollamaClient = OllamaClient("http://localhost:11434")
+        ollamaClient.getModelOrNull(ollamaModel.id)
 
-            val prompt =
-                prompt(id = UUID.randomUUID().toString()) {
-                    user {
-                        text(text = "hi")
+        println()
+        println("=".repeat(70))
+        println("Discovering MCP Server Tools")
+        println("=".repeat(70))
+        println()
+
+        val userDir = System.getProperty("user.dir")
+        val mcpCommand = listOf("npx", "-y", "@modelcontextprotocol/server-filesystem", userDir)
+        println("-".repeat(70))
+        println("MCP Server: ${mcpCommand[2]}")
+        println("Command: ${mcpCommand.joinToString(" ")}")
+        println()
+
+        try {
+            // Start the MCP server process
+            val process = ProcessBuilder(mcpCommand).start()
+
+            // Create stdio transport and tool registry
+            val transport = McpToolRegistryProvider.defaultStdioTransport(process)
+            val toolRegistry = McpToolRegistryProvider.fromTransport(transport = transport)
+
+            toolRegistry.tools.forEach { tool ->
+                // Get parameter info from descriptor
+                val descriptor = tool.descriptor
+                println("  Tool: ${tool.name}")
+                println("     Description: ${descriptor.description}")
+                val requiredParams = descriptor.requiredParameters
+                val optionalParams = descriptor.optionalParameters
+
+                if (requiredParams.isNotEmpty() || optionalParams.isNotEmpty()) {
+                    println("     Parameters:")
+                    for (param in requiredParams) {
+                        println("       - ${param.name}: ${param.type} (required)")
+                        if (param.description.isNotBlank()) {
+                            println("         ${param.description}")
+                        }
+                    }
+                    for (param in optionalParams) {
+                        println("       - ${param.name}: ${param.type} (optional)")
+                        if (param.description.isNotBlank()) {
+                            println("         ${param.description}")
+                        }
                     }
                 }
-            val response = executor.execute(prompt = prompt, model = glm47flashModel).single()
-            response.metaInfo.inputTokensCount
-            response.metaInfo.outputTokensCount
-            response.metaInfo.totalTokensCount
+                println()
+            }
 
-            executor.close()
+            // Create the runner
+            val agent =
+                AIAgent(
+                    promptExecutor = SingleLLMPromptExecutor(ollamaClient),
+                    llmModel = ollamaModel,
+                    toolRegistry = toolRegistry,
+                )
+            val request = "Count number of files and folders in $userDir . Exclude build folder. "
+            println(request)
+            val output = agent.run(request + "You can only call tools. Get it by calling tools.")
+            println(output)
+            // Close the transport and process
+            transport.close()
+            process.destroyForcibly()
         } catch (e: Exception) {
-            println("Error: ${e.message}")
-            println("\nMake sure:")
-            println("1. Ollama is running (try: ollama serve)")
-            println("2. ${glm47flashModel.id} model is installed (try: ollama pull ${glm47flashModel.id})")
-            e.printStackTrace()
+            println("  Error connecting to ${mcpCommand[2]}: ${e.message}")
+            println("    Make sure the MCP server package is available via npm")
+            println()
         }
+
+        println("=".repeat(70))
+        println("Tool Discovery Complete")
+        println("=".repeat(70))
     }

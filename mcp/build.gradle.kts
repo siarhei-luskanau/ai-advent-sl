@@ -22,6 +22,7 @@ dependencies {
     implementation(libs.kotlinx.datetime)
     implementation(libs.ktor.client.apache5)
     implementation(libs.ktor.serialization.kotlinx.json)
+    implementation(libs.slf4j.simple)
     implementation(project.dependencies.platform(libs.ktor.bom))
 }
 
