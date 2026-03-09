@@ -16,10 +16,8 @@ java {
 
 dependencies {
     implementation(libs.koog.agents)
-    implementation(libs.koog.prompt.structure)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.kotlinx.coroutines.swing)
-    implementation(libs.kotlinx.datetime)
     implementation(libs.ktor.client.apache5)
     implementation(libs.ktor.serialization.kotlinx.json)
     implementation(libs.slf4j.simple)
