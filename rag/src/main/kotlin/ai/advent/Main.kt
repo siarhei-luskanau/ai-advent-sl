@@ -3,9 +3,6 @@ package ai.advent
 import ai.koog.agents.core.agent.AIAgent
 import ai.koog.agents.core.agent.config.AIAgentConfig
 import ai.koog.agents.core.tools.ToolRegistry
-import ai.koog.agents.core.tools.annotations.LLMDescription
-import ai.koog.agents.core.tools.annotations.Tool
-import ai.koog.agents.core.tools.reflect.ToolSet
 import ai.koog.agents.ext.agent.chatAgentStrategy
 import ai.koog.embeddings.base.Vector
 import ai.koog.embeddings.local.LLMEmbedder
@@ -16,29 +13,10 @@ import ai.koog.prompt.executor.ollama.client.OllamaModels
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
 import ai.koog.prompt.llm.LLModel
-import ai.koog.rag.base.mostRelevantDocuments
 import ai.koog.rag.vector.DocumentEmbedder
 import ai.koog.rag.vector.EmbeddingBasedDocumentStorage
 import ai.koog.rag.vector.InMemoryVectorStorage
 import kotlinx.coroutines.runBlocking
-
-data class TextChunk(
-    val source: String,
-    val content: String,
-)
-
-class TextChunkEmbedder(
-    private val base: LLMEmbedder,
-) : DocumentEmbedder<TextChunk> {
-    override suspend fun embed(document: TextChunk): Vector = base.embed(document.content)
-
-    override suspend fun embed(text: String): Vector = base.embed(text)
-
-    override fun diff(
-        embedding1: Vector,
-        embedding2: Vector,
-    ): Double = base.diff(embedding1, embedding2)
-}
 
 // Question: Today is March 7. Who has a next birthday and what he/she likes?
 val knowledgeBase =
@@ -75,49 +53,24 @@ val knowledgeBase =
         ),
     )
 
-class DocumentSearchTools(
-    private val documentStorage: EmbeddingBasedDocumentStorage<TextChunk>,
-) : ToolSet {
-    @Tool
-    @LLMDescription("Search for relevant documents about any topic (if exists). Returns the content of the most relevant documents.")
-    suspend fun searchDocuments(
-        @LLMDescription("Query to search relevant documents about")
-        query: String,
-        @LLMDescription("Maximum number of documents")
-        count: Int,
-    ): String {
-        val relevantDocuments = documentStorage.mostRelevantDocuments(query, count = count).toList()
-
-        if (relevantDocuments.isEmpty()) {
-            return "No relevant documents found for the query: $query"
-        }
-
-        val result = StringBuilder("Found ${relevantDocuments.size} relevant documents:\n\n")
-        relevantDocuments.forEachIndexed { index, document ->
-            result.append("Document ${index + 1}: ${document.source}\n")
-            result.append("Content: ${document.content}\n\n")
-        }
-        return result.toString()
-    }
-}
-
 fun main() =
     runBlocking {
         val chatClient = OllamaClient("http://localhost:11434")
-        val chatModel = LLModel(
-            provider = LLMProvider.Ollama,
-            id = "gpt-oss:20b",
-            capabilities =
-                listOf(
-                    LLMCapability.Completion,
-                    LLMCapability.Schema.JSON.Standard,
-                    LLMCapability.Speculation,
-                    LLMCapability.Temperature,
-                    LLMCapability.ToolChoice,
-                    LLMCapability.Tools,
-                ),
-            contextLength = 128_000,
-        )
+        val chatModel =
+            LLModel(
+                provider = LLMProvider.Ollama,
+                id = "gpt-oss:20b",
+                capabilities =
+                    listOf(
+                        LLMCapability.Completion,
+                        LLMCapability.Schema.JSON.Standard,
+                        LLMCapability.Speculation,
+                        LLMCapability.Temperature,
+                        LLMCapability.ToolChoice,
+                        LLMCapability.Tools,
+                    ),
+                contextLength = 128_000,
+            )
         chatClient.getModelOrNull(chatModel.id, pullIfMissing = true)
         chatClient.getModelOrNull(OllamaModels.Embeddings.NOMIC_EMBED_TEXT.id, pullIfMissing = true)
         val llmEmbedder = LLMEmbedder(chatClient, OllamaModels.Embeddings.NOMIC_EMBED_TEXT)
@@ -131,9 +84,9 @@ fun main() =
         }
         println("Knowledge base ready.\n")
 
-        val tools =
+        val toolRegistry =
             ToolRegistry {
-                tools(DocumentSearchTools(documentStorage).asTools())
+                tools(DocumentSearchToolSet(documentStorage).asTools())
             }
 
         val agent =
@@ -154,7 +107,7 @@ fun main() =
                         model = chatModel,
                         maxAgentIterations = 20,
                     ),
-                toolRegistry = tools,
+                toolRegistry = toolRegistry,
             )
 
         println("=== RAG Мини-чат ===")
