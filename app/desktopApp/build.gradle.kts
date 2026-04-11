@@ -1,4 +1,5 @@
 import org.jetbrains.compose.desktop.application.dsl.TargetFormat
+import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.compose.compiler)
@@ -7,11 +8,15 @@ plugins {
 }
 
 kotlin {
-    jvmToolchain(
-        libs.versions.javaVersion
-            .get()
-            .toInt(),
-    )
+    compilerOptions {
+        jvmTarget = JvmTarget.fromTarget(libs.versions.javaVersion.get())
+        freeCompilerArgs.add("-Xexplicit-backing-fields")
+    }
+}
+
+java {
+    sourceCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
+    targetCompatibility = JavaVersion.toVersion(libs.versions.javaVersion.get())
 }
 
 dependencies {

@@ -1,4 +1,4 @@
-rootProject.name = "compose-multiplatform-template"
+rootProject.name = "ai-advent-day-1"
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 include(

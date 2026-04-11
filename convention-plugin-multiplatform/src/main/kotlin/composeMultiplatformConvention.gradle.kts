@@ -59,7 +59,6 @@ kotlin {
             implementation(libs.koin.compose)
             implementation(libs.koog.agents)
             implementation(libs.kotlinx.coroutines.core)
-            implementation(libs.kotlinx.datetime)
             implementation(libs.kotlinx.serialization.json)
             implementation(libs.markdown.renderer)
             implementation(project.dependencies.platform(libs.koin.bom))

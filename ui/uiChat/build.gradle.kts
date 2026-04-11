@@ -9,7 +9,6 @@ kotlin {
             implementation(projects.core.coreCommon)
             implementation(projects.ui.uiCommon)
             implementation(libs.koog.agents)
-            implementation(libs.kotlinx.datetime)
             implementation(libs.markdown.renderer)
         }
     }

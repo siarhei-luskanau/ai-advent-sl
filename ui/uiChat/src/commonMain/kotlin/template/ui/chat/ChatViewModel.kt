@@ -5,11 +5,11 @@ import androidx.lifecycle.viewModelScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.datetime.Clock
 import template.core.common.DispatcherSet
 import template.ui.chat.model.ChatMessage
 import template.ui.chat.model.MessageRole
 import template.ui.chat.service.ChatService
+import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -135,6 +135,7 @@ class ChatViewModel(
                         }
                     }
                 }.onFailure { error ->
+                    error.printStackTrace()
                     viewState.update { state ->
                         val messages =
                             when (state) {

@@ -1,7 +1,7 @@
 package template.ui.chat.service
 
 import ai.koog.prompt.dsl.Prompt
-import ai.koog.prompt.executor.llms.SingleLLMPromptExecutor
+import ai.koog.prompt.executor.llms.MultiLLMPromptExecutor
 import ai.koog.prompt.executor.ollama.client.OllamaClient
 import ai.koog.prompt.llm.LLMCapability
 import ai.koog.prompt.llm.LLMProvider
@@ -9,9 +9,9 @@ import ai.koog.prompt.llm.LLModel
 import ai.koog.prompt.message.Message
 import ai.koog.prompt.message.RequestMetaInfo
 import ai.koog.prompt.message.ResponseMetaInfo
-import kotlinx.datetime.Clock
 import template.ui.chat.model.ChatMessage
 import template.ui.chat.model.MessageRole
+import kotlin.time.Clock
 import kotlin.uuid.ExperimentalUuidApi
 import kotlin.uuid.Uuid
 
@@ -39,7 +39,7 @@ class OllamaChatService(
     }
 
     private val executor by lazy {
-        SingleLLMPromptExecutor(client)
+        MultiLLMPromptExecutor(client)
     }
 
     override suspend fun sendMessage(
@@ -55,7 +55,7 @@ class OllamaChatService(
                     id = Uuid.random().toString(),
                 )
 
-            client.getModelOrNull(model.id)
+            client.getModelOrNull(model.id, pullIfMissing = true)
 
             val response =
                 executor.execute(
